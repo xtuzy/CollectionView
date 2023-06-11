@@ -27,21 +27,24 @@ extension Set {
 }
 
 internal struct ItemUpdate: Hashable {
-    enum `Type` {
+  //操作类型  
+  enum `Type` {
         case insert
         case remove
         case update
     }
-    
+    //更新的View
     let view: CollectionReusableView
+  //布局属性
     let _attrs: CollectionViewLayoutAttributes?
+  //哪一个Item
     let indexPath: IndexPath
     let type: Type
     let identifier: SupplementaryViewIdentifier?
     
     fileprivate var attrs: CollectionViewLayoutAttributes {
         if let a = _attrs { return a }
-        
+        //获得所属的collectionview
         guard let cv = self.view.collectionView else {
             preconditionFailure("CollectionView Error: A view was returned without using a deque() method.")
         }
@@ -49,6 +52,7 @@ internal struct ItemUpdate: Hashable {
         if let id = identifier {
             a = cv.layoutAttributesForSupplementaryView(ofKind: id.kind, at: indexPath)
         } else if view is CollectionViewCell {
+          //是cell就获取item的属性, 获取是layout中的, 其存储了每个Item的
             a = cv.layoutAttributesForItem(at: indexPath)
         }
         a = a ?? view.attributes
@@ -126,7 +130,7 @@ final public class CollectionViewDocumentView: NSView {
     var preparedSupplementaryViewIndex = [SupplementaryViewIdentifier: CollectionReusableView]()
     
     func reset() {
-        
+        //把准备的cell移入复用集合
         for cell in preparedCellIndex {
             cell.1.removeFromSuperview()
             self.collectionView.enqueueCellForReuse(cell.1)
@@ -164,7 +168,7 @@ final public class CollectionViewDocumentView: NSView {
     var pendingUpdates: [ItemUpdate] = []
     
     func prepareRect(_ rect: CGRect, animated: Bool = false, force: Bool = false, completion: AnimationCompletion? = nil) {
-        
+        //相交的矩形
         let _rect = rect.intersection(CGRect(origin: CGPoint.zero, size: self.frame.size))
         
         if !force && !self.preparedRect.isEmpty && self.preparedRect.contains(_rect) {
@@ -222,16 +226,17 @@ final public class CollectionViewDocumentView: NSView {
         
         self.applyUpdates(updates, animated: animated, completion: completion)
     }
-    
+    //在某矩形里布局Item
     fileprivate func layoutItemsInRect(_ rect: CGRect, animated: Bool = false, forceAll: Bool = false) -> (rect: CGRect, updates: [ItemUpdate]) {
         var _rect = rect
 
         var updates = [ItemUpdate]()
-        
+        //之前显示的
         let oldIPs = self.preparedCellIndex.indexSet
+      //该矩形内的items
         var inserted = Set(self.collectionView.indexPathsForItems(in: rect))
-        let removed = oldIPs.removing(inserted)
-        let updated = inserted.remove(oldIPs)
+        let removed = oldIPs.removing(inserted)//之前显示的移除当前矩形内的
+        let updated = inserted.remove(oldIPs)//当前矩形内的移除之前显示的
         
         if !extending {
             var removedRect = CGRect.zero
@@ -240,10 +245,10 @@ final public class CollectionViewDocumentView: NSView {
                     if removedRect.isEmpty { removedRect = cell.frame } else { removedRect = removedRect.union(cell.frame) }
                     
                     cell.layer?.zPosition = 0
-                    if animated, let attrs = self.collectionView.layoutAttributesForItem(at: ip) ?? cell.attributes {
-                        self.preparedCellIndex[ip] = nil
-                        updates.append(ItemUpdate(cell: cell, attrs: attrs, type: .remove))
-                    } else {
+                    if animated, let attrs = self.collectionView.layoutAttributesForItem(at: ip) ?? cell.attributes {//动画
+                        self.preparedCellIndex[ip] = nil//从之前显示的移除
+                        updates.append(ItemUpdate(cell: cell, attrs: attrs, type: .remove))//添加到updates集合
+                    } else {//没有动画就直接移除
                         self.collectionView.enqueueCellForReuse(cell)
                         self.preparedCellIndex[ip] = nil
                         self.collectionView.delegate?.collectionView?(self.collectionView, didEndDisplayingCell: cell, forItemAt: ip)
@@ -262,7 +267,7 @@ final public class CollectionViewDocumentView: NSView {
             }
         }
         
-        for ip in inserted {
+        for ip in inserted {//要显示的
             guard let attrs = self.collectionView.collectionViewLayout.layoutAttributesForItem(at: ip) else { continue }
             let cell = self.collectionView._loadCell(at: ip)
             
@@ -272,20 +277,20 @@ final public class CollectionViewDocumentView: NSView {
             self.collectionView.delegate?.collectionView?(self.collectionView, willDisplayCell: cell, forItemAt: ip)
             cell.viewWillDisplay()
             if cell.superview == nil {
-                self.addSubview(cell)
+                self.addSubview(cell)//添加cell到scrollview
             }
-            if animated {
+            if animated {//如果要动画
                 cell.apply(attrs, animated: false)
-                cell.isHidden = true
+                cell.isHidden = true//先设置不可见
                 cell.alphaValue = 0
             }
-            updates.append(ItemUpdate(cell: cell, attrs: attrs, type: .insert))
+            updates.append(ItemUpdate(cell: cell, attrs: attrs, type: .insert))//添加到updates集合
             
-            self.preparedCellIndex[ip] = cell
+            self.preparedCellIndex[ip] = cell//添加到要显示集合
         }
 
         if forceAll {
-            for ip in updated {
+            for ip in updated {//要更新的
                 if let attrs = self.collectionView.collectionViewLayout.layoutAttributesForItem(at: ip),
                 let cell = preparedCellIndex[ip] {
                     _rect = _rect.union(attrs.frame)
