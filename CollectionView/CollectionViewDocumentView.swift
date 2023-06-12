@@ -166,7 +166,7 @@ final public class CollectionViewDocumentView: NSView {
     }
     
     var pendingUpdates: [ItemUpdate] = []
-    
+    //在目标矩形里排列Item
     func prepareRect(_ rect: CGRect, animated: Bool = false, force: Bool = false, completion: AnimationCompletion? = nil) {
         //与SCrollView相交的矩形
         let _rect = rect.intersection(CGRect(origin: CGPoint.zero, size: self.frame.size))
