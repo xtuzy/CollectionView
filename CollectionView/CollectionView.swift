@@ -309,7 +309,7 @@ open class CollectionView: ScrollView, NSDraggingSource {
     }
     //加载cell
     final func _loadCell(at indexPath: IndexPath) -> CollectionViewCell {
-        let cell = self.cellForItem(at: indexPath) ?? self.dataSource?.collectionView(self, cellForItemAt: indexPath)
+        let cell = self.cellForItem(at: indexPath) ?? self.dataSource?.collectionView(self, cellForItemAt: indexPath)//
         precondition(cell != nil, "Unable to load cell for item at \(indexPath)")
         assert(cell!.collectionView != nil, "Attemp to load cell without using deque")
         return cell!
