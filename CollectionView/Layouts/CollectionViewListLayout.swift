@@ -136,7 +136,7 @@ public final class CollectionViewListLayout: CollectionViewLayout {
     fileprivate var numSections: Int { return self.collectionView?.numberOfSections ?? 0 }
     
     override public func prepare() {
-        
+        //重置存储的section
         self.allIndexPaths.removeAll()
         self.sections.removeAll()
         
@@ -147,7 +147,7 @@ public final class CollectionViewListLayout: CollectionViewLayout {
         
         var top: CGFloat = self.collectionView?.leadingView?.bounds.size.height ?? 0
         let contentInsets = cv.contentInsets
-        
+        //统计全部sections
         for sectionIdx in 0..<numberOfSections {
             
             // 1. Get section-specific metrics (minimumInteritemSpacing, sectionInset)
@@ -188,14 +188,14 @@ public final class CollectionViewListLayout: CollectionViewLayout {
                 var yPos = section.contentFrame.origin.y
                 
                 var newTop: CGFloat = 0
-                
+                //统计全部items
                 for idx in 0..<itemCount {
                     
                     let ip = IndexPath.for(item: idx, section: sectionIdx)
-                    allIndexPaths.append(ip)
+                    allIndexPaths.append(ip)/记录全部item
                     
                     let attrs = CollectionViewLayoutAttributes(forCellWith: ip)
-                    let rowHeight: CGFloat = self.delegate?.collectionView?(cv, layout: self, heightForItemAt: ip) ?? self.itemHeight
+                    let rowHeight: CGFloat = self.delegate?.collectionView?(cv, layout: self, heightForItemAt: ip) ?? self.itemHeight//item的高度像必须固定
                     attrs.frame = NSRect(x: xPos, y: yPos, width: itemWidth, height: rowHeight)
                     newTop = yPos + rowHeight
                     yPos = newTop + rowSpacing
@@ -229,9 +229,9 @@ public final class CollectionViewListLayout: CollectionViewLayout {
         guard let cv = collectionView else { return CGSize.zero }
         var size = cv.contentVisibleRect.size
         
-        if self.numSections == 0 { return size }
+        if self.numSections == 0 { return size }//没有section直接返回可见区域
         
-        let height = self.sections.last?.frame.maxY ?? 0
+        let height = self.sections.last?.frame.maxY ?? 0//有section返回section存储的布局信息
         size.height = hugContents ? height : max(height, cv.contentVisibleRect.size.height - cv.contentInsets.height)
         return size
     }
@@ -251,24 +251,24 @@ public final class CollectionViewListLayout: CollectionViewLayout {
     public override func layoutAttributesForItems(in rect: CGRect) -> [CollectionViewLayoutAttributes] {
         return itemAttributes(in: rect) { return $0.copy() }
     }
-    
+    //矩形里的Items
     private func itemAttributes<T>(in rect: CGRect, reducer: ((CollectionViewLayoutAttributes) -> T)) -> [T] {
         guard !rect.isEmpty && !self.sections.isEmpty else { return [] }
         
         var results = [T]()
-        for section in self.sections {
+        for section in self.sections {//迭代section
             
             // If we have passed the target, finish
-            guard !section.items.isEmpty && section.frame.intersects(rect) else {
+            guard !section.items.isEmpty && section.frame.intersects(rect) else {//section是否与目标矩形相交
                 guard section.frame.origin.y < rect.maxY else { break }
                 continue
             }
             
-            if rect.contains(section.contentFrame) {
+            if rect.contains(section.contentFrame) {//目标矩形包含section
                 results.append(contentsOf: section.items.map { return reducer($0) })
             } else {
                 for item in section.items {
-                    guard item.frame.intersects(rect) else {
+                    guard item.frame.intersects(rect) else {//item是否相交
                         guard item.frame.minY < rect.maxY else { break }
                         continue
                     }
