@@ -309,7 +309,7 @@ open class CollectionView: ScrollView, NSDraggingSource {
     }
     //加载cell
     final func _loadCell(at indexPath: IndexPath) -> CollectionViewCell {
-        let cell = self.cellForItem(at: indexPath) ?? self.dataSource?.collectionView(self, cellForItemAt: indexPath)//
+        let cell = self.cellForItem(at: indexPath) ?? self.dataSource?.collectionView(self, cellForItemAt: indexPath)//先从可见缓存中获取, 没有从datasource中获取
         precondition(cell != nil, "Unable to load cell for item at \(indexPath)")
         assert(cell!.collectionView != nil, "Attemp to load cell without using deque")
         return cell!
@@ -359,21 +359,21 @@ open class CollectionView: ScrollView, NSDraggingSource {
     
     /// Reloads all the data and views in the collection view
     open func reloadData() {
-        self.contentDocumentView.reset()
+        self.contentDocumentView.reset()//会回收当前显示的
         
-        prepareLayout(reloadData: true)
+        prepareLayout(reloadData: true)//重新加载全部section和item信息
         self.delegate?.collectionViewDidReloadLayout?(self)
         setContentViewSize()
         self.reflectScrolledClipView(self.clipView!)
         
         self._selectedIndexPaths.formIntersection(self.allIndexPaths)
-        self.contentDocumentView.prepareRect(_preperationRect, animated: false)
+        self.contentDocumentView.prepareRect(_preperationRect, animated: false)//排列item
     }
     
     private func _reloadDataCounts() {
         self.sections = fetchDataCounts()
     }
-    
+    //拉取最新的section和item数目
     private func fetchDataCounts() -> [Int] {
         let sCount = self.dataSource?.numberOfSections(in: self) ?? 0
         var res = [Int]()
@@ -491,12 +491,12 @@ open class CollectionView: ScrollView, NSDraggingSource {
     
     private var _lastViewSize: CGSize = CGSize.zero
     private func setContentViewSize(_ animated: Bool = false) {
-        let newSize = self.collectionViewLayout.collectionViewContentSize
+        let newSize = self.collectionViewLayout.collectionViewContentSize//从布局获取大小
         
         if animated {
             NSAnimationContext.runAnimationGroup({ (ctx) in
                 ctx.duration = self.animationDuration
-                contentDocumentView.animator().frame.size = newSize
+                contentDocumentView.animator().frame.size = newSize//设置documentivew位置
             }, completionHandler: nil)
         } else {
             contentDocumentView.frame.size = newSize
@@ -523,7 +523,7 @@ open class CollectionView: ScrollView, NSDraggingSource {
 
     }
     
-    open override func layout() {
+    open override func layout() {//NSView的
         self._floatingSupplementaryView.frame = self.bounds
 //        self.layoutLeadingViews()
         super.layout()
@@ -539,7 +539,7 @@ open class CollectionView: ScrollView, NSDraggingSource {
                 self._scrollItem(at: ip, to: .leading, animated: false, prepare: false, completion: nil)
             }
             self.reflectScrolledClipView(self.clipView!)
-            self.contentDocumentView.prepareRect(_preperationRect, force: true)
+            self.contentDocumentView.prepareRect(_preperationRect, force: true)//布局
             self.delegate?.collectionViewDidReloadLayout?(self)
         } else {
             self.contentDocumentView.prepareRect(_preperationRect, force: false)
@@ -578,7 +578,7 @@ open class CollectionView: ScrollView, NSDraggingSource {
         }
         
         self.leadingView?.layoutSubtreeIfNeeded()
-        self.collectionViewLayout.prepare()
+        self.collectionViewLayout.prepare()//计算位置
     }
     
 //    private func layoutLeadingViews() {
@@ -610,8 +610,8 @@ open class CollectionView: ScrollView, NSDraggingSource {
         }
         
         var viewSpecs = [ViewSpec]()
-        if sizeChanged {
-            for view in self.contentDocumentView.preparedCellIndex {
+        if sizeChanged {//大小改变时
+            for view in self.contentDocumentView.preparedCellIndex {//可见的items
                 let v = view.value
                 if !v.isHidden, let attrs = v.attributes {
                     let newRect = self.convert(attrs.frame, from: v.superview)
@@ -664,11 +664,11 @@ open class CollectionView: ScrollView, NSDraggingSource {
             }
             
             let cFrame = self.contentDocumentView.convert(spec.frame, from: self)
-            spec.view.frame = cFrame
+            spec.view.frame = cFrame//重新设置位置
         }
         
         self.contentDocumentView.preparedRect = self._preperationRect
-        self.contentDocumentView.prepareRect(self._preperationRect, animated: animated, force: true, completion: completion)
+        self.contentDocumentView.prepareRect(self._preperationRect, animated: animated, force: true, completion: completion)//布局
         self.delegate?.collectionViewDidReloadLayout?(self)
         
     }
