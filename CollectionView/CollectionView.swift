@@ -241,16 +241,16 @@ open class CollectionView: ScrollView, NSDraggingSource {
     /// - Parameter indexPath: The index path specifying the location of the supplementary view to load.
     ///
     /// - Returns: A valid CollectionReusableView
+    //获取cell
     public final func dequeueReusableCell(withReuseIdentifier identifier: String, for indexPath: IndexPath) -> CollectionViewCell {
-        
         var cell: CollectionViewCell?
-        if let c = self.contentDocumentView.preparedCellIndex[indexPath], c.reuseIdentifier == identifier {
+        if let c = self.contentDocumentView.preparedCellIndex[indexPath], c.reuseIdentifier == identifier {//从当前展示的cell缓存里获取
             cell = c
         } else {
-            cell = self._reusableCells[identifier]?.removeOne()
+            cell = self._reusableCells[identifier]?.removeOne()//从回收的缓存里获取
         }
         if cell == nil {
-            if let nib = self._cellNibs[identifier] {
+            if let nib = self._cellNibs[identifier] {//新建, 这个我不知道为什么要这样实现, 如果没有缓存的, 为何不在datesource里新建
                 cell = _firstObjectOfClass(CollectionViewCell.self, inNib: nib) as? CollectionViewCell
             } else if let aClass = self._cellClasses[identifier] {
                 cell = aClass.init()
@@ -307,7 +307,7 @@ open class CollectionView: ScrollView, NSDraggingSource {
         }
         self._reusableSupplementaryView[newID]?.insert(view)
     }
-    
+    //加载cell
     final func _loadCell(at indexPath: IndexPath) -> CollectionViewCell {
         let cell = self.cellForItem(at: indexPath) ?? self.dataSource?.collectionView(self, cellForItemAt: indexPath)
         precondition(cell != nil, "Unable to load cell for item at \(indexPath)")
