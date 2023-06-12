@@ -134,7 +134,7 @@ public final class CollectionViewListLayout: CollectionViewLayout {
     }
     
     fileprivate var numSections: Int { return self.collectionView?.numberOfSections ?? 0 }
-    
+    //排列计算位置
     override public func prepare() {
         //重置存储的section
         self.allIndexPaths.removeAll()
