@@ -668,7 +668,7 @@ open class CollectionView: ScrollView, NSDraggingSource {
         }
         
         self.contentDocumentView.preparedRect = self._preperationRect
-        self.contentDocumentView.prepareRect(self._preperationRect, animated: animated, force: true, completion: completion)//布局
+        self.contentDocumentView.prepareRect(self._preperationRect, animated: animated, force: true, completion: completion)//布局, 不懂为什么之前也设置了位置
         self.delegate?.collectionViewDidReloadLayout?(self)
         
     }
@@ -1130,35 +1130,35 @@ open class CollectionView: ScrollView, NSDraggingSource {
     private func endEditing(_ animated: Bool, completion: AnimationCompletion? = nil) {
         
         precondition(_editing > 0, "Unbalanced calls to endEditing(_:). This is an internal error of CollectionView")
-        if _editing > 1 {
+        if _editing > 1 {//大于1应该是代表多个操作, 但我没看明白怎么能大于1, 每次操作都会先加为1, 然后设置为0
             _editing -= 1
             return
         }
         _editing = 0
         
-        guard !self._updateContext.isEmpty else {
+        guard !self._updateContext.isEmpty else {//没有更新的
             completion?(true)
             return
         }
         
-        let oldData = self.sections
-        self._reloadDataCounts()
-        let newData = self.sections
+        let oldData = self.sections//旧的section
+        self._reloadDataCounts()//加载新section数据
+        let newData = self.sections//新section
         
-        for idx in self._updateContext.reloadSections {
+        for idx in self._updateContext.reloadSections {//重新加载section
             // Reuse existing operation to reload, delete, and insert items in the section as needed
             precondition(!self._updateContext.sections.deleted.contains(idx), "Cannot delete section that is also being reloaded")
-            let oldCount = oldData[idx]
-            let newCount = newData[idx]
-            let shared = min(oldCount, newCount)
-            let update = Set(IndexPath.inRange(0..<shared, section: idx))
+            let oldCount = oldData[idx]//旧的item数
+            let newCount = newData[idx]//新的item数
+            let shared = min(oldCount, newCount)//交集
+            let update = Set(IndexPath.inRange(0..<shared, section: idx))//交集需要更新
             self._updateContext.reloadedItems.formUnion(update)
-            if oldCount > newCount {
+            if oldCount > newCount {//如果旧的比新的多
                 let delete = Set(IndexPath.inRange(shared..<oldCount, section: idx))
-                self._updateContext.items.deleted.formUnion(delete)
-            } else if oldCount < newCount {
+                self._updateContext.items.deleted.formUnion(delete)//需要删去多出来的
+            } else if oldCount < newCount {//旧的少
                 let insert = IndexPath.inRange(shared..<newCount, section: idx)
-                self._updateContext.items.inserted.formUnion(insert)
+                self._updateContext.items.inserted.formUnion(insert)//需要添加多的
             }
         }
         
