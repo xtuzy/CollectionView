@@ -1152,7 +1152,7 @@ open class CollectionView: ScrollView, NSDraggingSource {
             let newCount = newData[idx]//新的item数
             let shared = min(oldCount, newCount)//交集
             let update = Set(IndexPath.inRange(0..<shared, section: idx))//交集需要更新
-            self._updateContext.reloadedItems.formUnion(update)
+            self._updateContext.reloadedItems.formUnion(update)//交集需要重载, 意思是IndexPath是一样的, 但数据可能变了
             if oldCount > newCount {//如果旧的比新的多
                 let delete = Set(IndexPath.inRange(shared..<oldCount, section: idx))
                 self._updateContext.items.deleted.formUnion(delete)//需要删去多出来的
@@ -1163,10 +1163,10 @@ open class CollectionView: ScrollView, NSDraggingSource {
         }
         
         guard !self._updateContext.items.isEmpty || !self._updateContext.sections.isEmpty else {
-            if !_updateContext.reloadedItems.isEmpty {
+            if !_updateContext.reloadedItems.isEmpty {//要重新加载的
                 for ip in _updateContext.reloadedItems {
-                    guard let cell = self.contentDocumentView.preparedCellIndex[ip] else { continue }
-                    self.contentDocumentView.preparedCellIndex[ip] = _prepareReplacementCell(for: cell, at: ip)
+                    guard let cell = self.contentDocumentView.preparedCellIndex[ip] else { continue }//尝试获取cell
+                    self.contentDocumentView.preparedCellIndex[ip] = _prepareReplacementCell(for: cell, at: ip)//
                 }
                 self.reloadLayout(animated, scrollPosition: .none, completion: completion)
             } else {
@@ -1319,14 +1319,14 @@ open class CollectionView: ScrollView, NSDraggingSource {
         self._reloadLayout(animated, scrollPosition: .none, completion: completion, needsRecalculation: false)
        
     }
-    
+    //准备替换cell
     private func _prepareReplacementCell(for currentCell: CollectionViewCell, at indexPath: IndexPath) -> CollectionViewCell {
-        defer {
-            _ = self.contentDocumentView.preparedCellIndex.remove(currentCell)
+        defer {//意味着一定会执行一次, 相当于C#里异常处理后的finally
+            _ = self.contentDocumentView.preparedCellIndex.remove(currentCell)//从当前显示的缓存中移除
             _ = self.contentDocumentView.preparedCellIndex.removeValue(for: indexPath)
         }
         
-        guard let newCell = self.dataSource?.collectionView(self, cellForItemAt: indexPath) else {
+        guard let newCell = self.dataSource?.collectionView(self, cellForItemAt: indexPath) else {//从当前缓存获取或者新建, 会填充新数据
             assertionFailure("For some reason collection view tried to load cells without a data source")
             return currentCell
         }
@@ -1335,15 +1335,15 @@ open class CollectionView: ScrollView, NSDraggingSource {
         if newCell == currentCell {
             return newCell
         }
-        
+        //新拿到的与之前的不一样
         let removal = ItemUpdate(cell: currentCell, attrs: currentCell.attributes!, type: .remove)
-        self.contentDocumentView.removeItem(removal)
+        self.contentDocumentView.removeItem(removal)//加入回收缓存
         
         if let a = currentCell.attributes?.copyWithIndexPath(indexPath) {
-            newCell.apply(a, animated: false)
+            newCell.apply(a, animated: false)//将旧cell的属性设置到新cell
         }
         if newCell.superview == nil {
-            self.contentDocumentView.addSubview(newCell)
+            self.contentDocumentView.addSubview(newCell)//将新cell加入控件树
         }
         newCell.selected = self._selectedIndexPaths.contains(indexPath)
         newCell.viewDidDisplay()
