@@ -444,7 +444,7 @@ final public class CollectionViewDocumentView: NSView {
                             attrs = attrs.copy()
                             attrs.alpha = 0
                         }
-                        item.view.apply(attrs, animated: true)//设置cell
+                        item.view.apply(attrs, animated: true)//设置cell, 带动画
                         if item.type == .insert {
                             item.view.viewDidDisplay()
                         }
