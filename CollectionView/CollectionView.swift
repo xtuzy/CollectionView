@@ -1162,11 +1162,11 @@ open class CollectionView: ScrollView, NSDraggingSource {
             }
         }
         
-        guard !self._updateContext.items.isEmpty || !self._updateContext.sections.isEmpty else {
-            if !_updateContext.reloadedItems.isEmpty {//要重新加载的
+        guard !self._updateContext.items.isEmpty || !self._updateContext.sections.isEmpty else {//没有item操作
+            if !_updateContext.reloadedItems.isEmpty {//有要重新加载的
                 for ip in _updateContext.reloadedItems {
                     guard let cell = self.contentDocumentView.preparedCellIndex[ip] else { continue }//尝试获取cell
-                    self.contentDocumentView.preparedCellIndex[ip] = _prepareReplacementCell(for: cell, at: ip)//
+                    self.contentDocumentView.preparedCellIndex[ip] = _prepareReplacementCell(for: cell, at: ip)//会重新加载数据
                 }
                 self.reloadLayout(animated, scrollPosition: .none, completion: completion)
             } else {
@@ -1176,27 +1176,27 @@ open class CollectionView: ScrollView, NSDraggingSource {
         }
         
         // Validate the section changes
-        let sectionDelta = self._updateContext.sections.inserted.count - self._updateContext.sections.deleted.count
+        let sectionDelta = self._updateContext.sections.inserted.count - self._updateContext.sections.deleted.count//插入的和删除的section差值
         precondition(newData.count - oldData.count == sectionDelta, "Invalid section changes. Had \(oldData.count) delta of \(sectionDelta) is \(oldData.count - sectionDelta) but expected \(newData.count)")
         
         var source = [SectionValidator]()
         var target = [SectionValidator?](repeatElement(nil, count: newData.count))
         
         // Populate source with existing data
-        for s in oldData.enumerated() {
+        for s in oldData.enumerated() {//旧的
             source.append(SectionValidator(source: s.offset, target: nil, count: s.element))
         }
         
         // Populate target with inserted
-        for s in _updateContext.sections.inserted {
+        for s in _updateContext.sections.inserted {//插入的
             target[s] = SectionValidator(source: nil, target: s, count: newData[s])
         }
         
         // The things in source that we want to ignore beow
-        var transferred = _updateContext.sections.deleted
+        var transferred = _updateContext.sections.deleted//删除的
         
         // Populate target with moved
-        for m in _updateContext.sections.moved {
+        for m in _updateContext.sections.moved {//移动的
             transferred.insert(m.0)
             source[m.0].target = m.1
             target[m.1] = source[m.0]
@@ -1259,7 +1259,7 @@ open class CollectionView: ScrollView, NSDraggingSource {
         }
         
         // Do the layout prep
-        prepareLayout(reloadData: false)
+        prepareLayout(reloadData: false)//计算位置
 
         // Update selections
         self._selectedIndexPaths = Set(self._selectedIndexPaths.compactMap { (ip) -> IndexPath? in
@@ -1314,12 +1314,12 @@ open class CollectionView: ScrollView, NSDraggingSource {
             }
         }
         
-        self.contentDocumentView.pendingUpdates = _updateContext.updates
-        self.contentDocumentView.preparedCellIndex = updatedCellIndex
-        self._reloadLayout(animated, scrollPosition: .none, completion: completion, needsRecalculation: false)
+        self.contentDocumentView.pendingUpdates = _updateContext.updates//等待更新
+        self.contentDocumentView.preparedCellIndex = updatedCellIndex//新的要显示的
+        self._reloadLayout(animated, scrollPosition: .none, completion: completion, needsRecalculation: false)//布局设置位置
        
     }
-    //准备替换cell
+    //准备替换cell, 可能复用, 会重填数据
     private func _prepareReplacementCell(for currentCell: CollectionViewCell, at indexPath: IndexPath) -> CollectionViewCell {
         defer {//意味着一定会执行一次, 相当于C#里异常处理后的finally
             _ = self.contentDocumentView.preparedCellIndex.remove(currentCell)//从当前显示的缓存中移除
