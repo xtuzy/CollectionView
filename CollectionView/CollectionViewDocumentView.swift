@@ -164,11 +164,11 @@ final public class CollectionViewDocumentView: NSView {
         self.prepareRect(preparedRect.insetBy(dx: -amount, dy: -amount), completion: nil)
         self.extending = false
     }
-    
+    //要更新的item
     var pendingUpdates: [ItemUpdate] = []
     //在目标矩形里排列Item, 其设置到View
     func prepareRect(_ rect: CGRect, animated: Bool = false, force: Bool = false, completion: AnimationCompletion? = nil) {
-        //与SCrollView相交的矩形
+        //与SCrollView内容相交的矩形
         let _rect = rect.intersection(CGRect(origin: CGPoint.zero, size: self.frame.size))
         
         if !force && !self.preparedRect.isEmpty && self.preparedRect.contains(_rect) {
